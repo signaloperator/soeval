@@ -1,0 +1,114 @@
+Signal Operator 测试评估 (三个I2C元件, 两个SPI元件)
+Signal Operator Evaluation (3 I2C Chips, 2 SPI Chips)
+
+https://signaloperator.com/
+
+0.0.5.0
+2023/10/20
+
+(此文件包含中文和英文文字, 其内容相同)
+(This file contains Chinese and English text, of the same content)
+
+##########
+
+硬件
+Hardware
+
+主机
+Master
+Arduino Uno R3, 电平转换器
+Arduino Uno R3, Level shifting
+
+从机
+Slave
+I2C: AT24C01, LM75A, DS3231
+SPI: W25Q128, ADS1118
+
+##########
+
+I2C / AT24C01
+
+i2cscan                (扫描I2C从机地址, 50是AT24C01) (Scan for I2C slave devices, 50 is AT24C01)
+i2cwrite @50 00 nostop                                                      (地址00) (Address 00)
+i2cread @50 04 stop                                                  (读取04字节) (Read 04 bytes)
+i2cwrite @50 00 F0 F1 F2 F3 stop   (写入 F0 F1 F2 F3 到地址 00) (Write F0 F1 F2 F3 to address 00)
+i2cwrite @50 01 AA BB stop                     (写入 AA BB 到地址 01) (Write AA BB to address 01)
+i2cwrite @50 00 nostop                                                     (地址 00) (Address 00)
+i2cread @50 04 stop                                                (读取 04 字节) (Read 04 bytes)
+
+(所有数字为十六进制)     (All numbers are hex)
+(括号"("和")"之间是注释) (Text between "(" and ")" is comment)
+
+##########
+
+I2C / LM75A
+
+i2cscan                    (扫描I2C从机地址, 48是LM75A) (Scan for I2C slave devices, 48 is LM75A)
+i2cwrite @48 00 nostop                                   (地址00, 温度) (Address 00, Temperature)
+i2cread @48 02 stop                                            (两字节的数据) (Two bytes of data)
+
+(数字为十六进制)                   (Numbers are hex)
+(D0到D6, 7个低位LSB比特, 是没用的) (D0 to D6, 7 LSB bits, are useless)
+(数据最低位是+0.5摄氏度)           (Data LSB is +0.5 degrees celsius)
+(例子 (0x1360>>7)*0.5 = 19摄氏度)  (Example (0x1360>>7)*0.5 = 19 degrees celsius)
+(括号"("和")"之间是注释)           (Text between "(" and ")" is comment)
+
+##########
+
+I2C / DS3231
+
+i2cscan                  (扫描I2C从机地址, 68是DS3231) (Scan for I2C slave devices, 68 is DS3231)
+i2cwrite @68 00 40 stop                  (地址00, 秒钟 = 40, BCD) (Address 00, seconds = 40, BCD)
+i2cwrite @68 01 08 stop                    (地址01, 分钟 = 8, BCD) (Address 01, minutes = 8, BCD)
+i2cwrite @68 01 nostop                                       (地址01, 分钟) (Address 01, minutes)
+i2cread @68 01 stop                                                     (读取分钟) (Read minutes)
+i2cwrite @68 01 nostop                             (地址01, 重复分钟) (Address 01, minutes again)
+i2cread @68 01 stop        (重复读取分钟, 最终它会变) (Read minutes again; eventually it changes)
+
+(数字为十六进制)         (Numbers are hex)
+(括号"("和")"之间是注释) (Text between "(" and ")" is comment)
+
+##########
+
+SPI / W25Q128
+
+spi @0AM0 03 00 00 00 FF FF FF FF    (地址00 00 00读取4字节) (Read 4 bytes from address 00 00 00)
+spi @0AM0 06                                                          (使能写入) (Enable writing)
+spi @0AM0 02 00 00 00 11 22 33 44     (写4字节到地址00 00 00) (Write 4 bytes to address 00 00 00)
+spi @0AM0 03 00 00 00 FF FF FF FF    (地址00 00 00读取4字节) (Read 4 bytes from address 00 00 00)
+
+(数字为十六进制)         (Numbers are hex)
+(括号"("和")"之间是注释) (Text between "(" and ")" is comment)
+
+("@0AM0"含义: SS引脚0A(10 DEC), MSB先发, SPI模式0)
+("@0AM0" means: SS pin 0A(10 DEC), MSB first, SPI mode 0)
+
+(另外一个例子: "@0BL2"意思是SS引脚0B, LSB先发, SPI模式2)
+(Another example: "@0BL2" means SS pin 0B, LSB first, SPI mode 2)
+
+(擦除芯片的命令: 使能写入, 然后: spi @0AM0 C7)
+(Command to erase the chip: Enable writing, then: spi @0AM0 C7)
+
+##########
+
+SPI / ADS1118
+
+spi @09M1 80 1B 00 00            (开始转换, 温度模式) (Start conversion, temperature sensor mode)
+spi @09M1 80 1B 00 00                                                             (重复) (Repeat)
+
+(数字为十六进制)         (Numbers are hex)
+(括号"("和")"之间是注释) (Text between "(" and ")" is comment)
+
+("@09M1"含义: SS引脚09(9 DEC), MSB先发, SPI模式1)
+("@09M1" means: SS pin 09(9 DEC), MSB first, SPI mode 1)
+
+(另外一个例子: "@0BL2"意思是SS引脚0B, LSB先发, SPI模式2)
+(Another example: "@0BL2" means SS pin 0B, LSB first, SPI mode 2)
+
+(2个低位LSB比特, 是没用的)  (2 LSB bits, are useless)
+(数据最低位是0.03125摄氏度) (Data LSB is 0.03125 degrees celsius)
+
+(例子 (0x0BCC>>2)*0.03125 = 23.59375摄氏度)
+(Example (0x0BCC>>2)*0.03125 = 23.59375 degrees celsius)
+
+----- 文件结束 END OF FILE -----
